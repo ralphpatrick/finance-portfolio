@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spend & Accruals | Finance OS</title>
+    <link rel="stylesheet" href="../assets/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body class="module-page">
+    <div class="module-header-bar">
+        <div class="container">
+            <a href="../index.html" class="back-button">← Back to Home</a>
+            <h1 class="module-title">Spend & Accruals Dashboard</h1>
+            <p class="module-subtitle">Vendor Analytics, Accrual Tracking & Anomaly Detection</p>
+        </div>
+    </div>
+
+    <div class="dashboard">
+        <div class="container">
+            <!-- KPI Cards -->
+            <div class="kpi-grid" id="kpiGrid">
+                <!-- Populated by JavaScript -->
+            </div>
+
+            <!-- Vendor Spend Trend -->
+            <div class="chart-container">
+                <h3>Vendor Spend Trend by Category</h3>
+                <div style="height: 400px; position: relative;">
+                    <canvas id="spendChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Accrual Status -->
+            <div class="chart-container">
+                <h3>Accrual Status (Current Month)</h3>
+                <div style="height: 400px; position: relative;">
+                    <canvas id="accrualChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Vendor Spend Table -->
+            <div class="data-table-container">
+                <h3>Vendor Spend Details (Last 6 Months)</h3>
+                <div style="overflow-x: auto;">
+                    <table id="vendorTable">
+                        <thead>
+                            <tr>
+                                <th>Month</th>
+                                <th>Vendor</th>
+                                <th>Category</th>
+                                <th class="number">Amount</th>
+                                <th>Payment Status</th>
+                                <th class="number">Aging (Days)</th>
+                                <th>Anomaly</th>
+                            </tr>
+                        </thead>
+                        <tbody id="vendorTableBody">
+                            <!-- Populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Accrual Table -->
+            <div class="data-table-container">
+                <h3>Accrual Tracker (Recent Months)</h3>
+                <div style="overflow-x: auto;">
+                    <table id="accrualTable">
+                        <thead>
+                            <tr>
+                                <th>Month</th>
+                                <th>Category</th>
+                                <th class="number">Incurred</th>
+                                <th class="number">Invoiced</th>
+                                <th class="number">Accrual Amount</th>
+                                <th class="number">Variance %</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="accrualTableBody">
+                            <!-- Populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Utility functions
+        function parseCSV(csvText) {
+            const lines = csvText.trim().split('\n');
+            const headers = lines[0].split(',').map(h => h.trim());
+            const data = [];
+            
+            for (let i = 1; i < lines.length; i++) {
+                const values = lines[i].split(',').map(v => v.trim());
+                const row = {};
+                headers.forEach((header, index) => {
+                    row[header] = values[index];
+                });
+                data.push(row);
+            }
+            
+            return data;
+        }
+
+        function formatCurrency(value, decimals = 0) {
+            const num = parseFloat(value);
+            if (isNaN(num)) return '$0';
+            return '$' + num.toLocaleString('en-US', {
+                minimumFractionDigits: decimals,
+                maximumFractionDigits: decimals
+            });
+        }
+
+        function getMonthName(dateStr) {
+            const [year, month] = dateStr.split('-');
+            const date = new Date(year, parseInt(month) - 1);
+            return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+        }
+
+        // Data loading
+        let vendorData = [];
+        let accrualData = [];
+        let charts = {};
+
+        async function loadData() {
+            try {
+                const [vendorResponse, accrualResponse] = await Promise.all([
+                    fetch('../data/vendor_spend.csv'),
+                    fetch('../data/accruals.csv')
+                ]);
+                
+                const [vendorText, accrualText] = await Promise.all([
+                    vendorResponse.text(),
+                    accrualResponse.text()
+                ]);
+                
+                vendorData = parseCSV(vendorText);
+                accrualData = parseCSV(accrualText);
+                
+                initializeDashboard();
+            } catch (error) {
+                console.error('Error loading data:', error);
+            }
+        }
+
+        function initializeDashboard() {
+            updateKPIs();
+            createCharts();
+            updateVendorTable();
+            updateAccrualTable();
+        }
+
+        function updateKPIs() {
+            const last6Months = vendorData.slice(-18); // 3 vendors per month
+            const totalSpend = last6Months.reduce((sum, row) => 
+                sum + parseFloat(row.amount), 0);
+            
+            const pendingInvoices = vendorData.filter(row => 
+                row.payment_status === 'Pending').length;
+            
+            const anomalyCount = vendorData.filter(row => 
+                row.anomaly_flag === 'Yes').length;
+            
+            const totalAccrualGap = accrualData
+                .filter(row => row.status !== 'Matched')
+                .reduce((sum, row) => sum + parseFloat(row.accrual_amount), 0);
+            
+            const avgAgingDays = last6Months
+                .reduce((sum, row) => sum + parseFloat(row.aging_days), 0) / last6Months.length;
+            
+            const kpiHTML = `
+                <div class="kpi-card">
+                    <div class="kpi-label">Total Spend (6M)</div>
+                    <div class="kpi-value">${formatCurrency(totalSpend / 1000)}K</div>
+                    <div class="kpi-change">${last6Months.length} transactions</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Pending Invoices</div>
+                    <div class="kpi-value">${pendingInvoices}</div>
+                    <div class="kpi-change ${pendingInvoices > 5 ? 'negative' : ''}>
+                        ${pendingInvoices > 5 ? 'Review required' : 'Normal'}
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Total Accrual Gap</div>
+                    <div class="kpi-value">${formatCurrency(totalAccrualGap / 1000)}K</div>
+                    <div class="kpi-change ${totalAccrualGap > 100000 ? 'negative' : 'positive'}">
+                        ${totalAccrualGap > 100000 ? 'High variance' : 'Under control'}
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Anomaly Flags</div>
+                    <div class="kpi-value">${anomalyCount}</div>
+                    <div class="kpi-change ${anomalyCount > 0 ? 'negative' : 'positive'}">
+                        ${anomalyCount > 0 ? 'Requires attention' : 'All clear'}
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('kpiGrid').innerHTML = kpiHTML;
+        }
+
+        function createCharts() {
+            // Vendor Spend Trend
+            const spendCtx = document.getElementById('spendChart').getContext('2d');
+            
+            // Aggregate by month and category
+            const monthlyData = {};
+            vendorData.forEach(row => {
+                if (!monthlyData[row.month]) {
+                    monthlyData[row.month] = { Logistics: 0, IT: 0, Marketing: 0 };
+                }
+                monthlyData[row.month][row.category] += parseFloat(row.amount);
+            });
+            
+            const months = Object.keys(monthlyData).slice(-12);
+            const labels = months.map(m => getMonthName(m));
+            
+            charts.spend = new Chart(spendCtx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Logistics',
+                            data: months.map(m => monthlyData[m].Logistics),
+                            borderColor: '#2563eb',
+                            backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                            tension: 0.3
+                        },
+                        {
+                            label: 'IT',
+                            data: months.map(m => monthlyData[m].IT),
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            tension: 0.3
+                        },
+                        {
+                            label: 'Marketing',
+                            data: months.map(m => monthlyData[m].Marketing),
+                            borderColor: '#f59e0b',
+                            backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                            tension: 0.3
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'top' }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: value => '$' + (value / 1000).toFixed(0) + 'K'
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Accrual Status Chart
+            const accrualCtx = document.getElementById('accrualChart').getContext('2d');
+            
+            // Get current month accruals
+            const currentMonth = accrualData.filter(row => 
+                row.month === '2025-03'
+            );
+            
+            const labels2 = currentMonth.map(row => row.category);
+            const incurred = currentMonth.map(row => parseFloat(row.incurred_amount));
+            const invoiced = currentMonth.map(row => parseFloat(row.invoiced_amount));
+            const accrual = currentMonth.map(row => parseFloat(row.accrual_amount));
+            
+            charts.accrual = new Chart(accrualCtx, {
+                type: 'bar',
+                data: {
+                    labels: labels2,
+                    datasets: [
+                        {
+                            label: 'Incurred',
+                            data: incurred,
+                            backgroundColor: '#2563eb'
+                        },
+                        {
+                            label: 'Invoiced',
+                            data: invoiced,
+                            backgroundColor: '#10b981'
+                        },
+                        {
+                            label: 'Accrual Gap',
+                            data: accrual,
+                            backgroundColor: '#ef4444'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'top' }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: value => '$' + (value / 1000).toFixed(0) + 'K'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateVendorTable() {
+            const tbody = document.getElementById('vendorTableBody');
+            const last6Months = vendorData.slice(-18); // Show last 6 months
+            
+            tbody.innerHTML = last6Months.map(row => {
+                const statusClass = row.payment_status === 'Paid' ? 'positive' : 'negative';
+                const anomalyClass = row.anomaly_flag === 'Yes' ? 'negative' : '';
+                const agingClass = parseFloat(row.aging_days) > 30 ? 'negative' : '';
+                
+                return `
+                    <tr>
+                        <td>${getMonthName(row.month)}</td>
+                        <td>${row.vendor_name}</td>
+                        <td>${row.category}</td>
+                        <td class="number">${formatCurrency(row.amount)}</td>
+                        <td class="${statusClass}">${row.payment_status}</td>
+                        <td class="number ${agingClass}">${row.aging_days}</td>
+                        <td class="${anomalyClass}">${row.anomaly_flag}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function updateAccrualTable() {
+            const tbody = document.getElementById('accrualTableBody');
+            const recentMonths = accrualData.slice(-9); // Last 3 months
+            
+            tbody.innerHTML = recentMonths.map(row => {
+                const statusClass = row.status === 'Matched' ? 'positive' : 'negative';
+                const varianceClass = parseFloat(row.variance_pct) > 10 ? 'negative' : '';
+                
+                return `
+                    <tr>
+                        <td>${getMonthName(row.month)}</td>
+                        <td>${row.category}</td>
+                        <td class="number">${formatCurrency(row.incurred_amount)}</td>
+                        <td class="number">${formatCurrency(row.invoiced_amount)}</td>
+                        <td class="number ${row.accrual_amount > 0 ? 'negative' : ''}">
+                            ${formatCurrency(row.accrual_amount)}
+                        </td>
+                        <td class="number ${varianceClass}">${parseFloat(row.variance_pct).toFixed(1)}%</td>
+                        <td class="${statusClass}">${row.status}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Initialize
+        loadData();
+    </script>
+</body>
+</html>

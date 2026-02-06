@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forecasting Engine | Finance OS</title>
+    <link rel="stylesheet" href="../assets/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body class="module-page">
+    <div class="module-header-bar">
+        <div class="container">
+            <a href="../index.html" class="back-button">← Back to Home</a>
+            <h1 class="module-title">Forecasting Engine</h1>
+            <p class="module-subtitle">Driver-Based Financial Model with Scenario Planning</p>
+        </div>
+    </div>
+
+    <div class="dashboard">
+        <div class="container">
+            <!-- Controls -->
+            <div class="controls">
+                <div class="control-group">
+                    <label for="scenario">Scenario:</label>
+                    <select id="scenario">
+                        <option value="actual">Actual</option>
+                        <option value="budget">Budget</option>
+                        <option value="forecast" selected>Forecast</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label for="timeframe">Timeframe:</label>
+                    <select id="timeframe">
+                        <option value="6">Last 6 Months</option>
+                        <option value="12" selected>Last 12 Months</option>
+                        <option value="24">All 24 Months</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- KPI Cards -->
+            <div class="kpi-grid" id="kpiGrid">
+                <!-- Populated by JavaScript -->
+            </div>
+
+            <!-- Revenue Chart -->
+            <div class="chart-container">
+                <h3>Revenue Trend: Budget vs Actual vs Forecast</h3>
+                <div style="height: 400px; position: relative;">
+                    <canvas id="revenueChart"></canvas>
+                </div>
+            </div>
+
+            <!-- P&L Chart -->
+            <div class="chart-container">
+                <h3>Monthly P&L Waterfall</h3>
+                <div style="height: 400px; position: relative;">
+                    <canvas id="plChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Margin Analysis -->
+            <div class="chart-container">
+                <h3>Margin Analysis</h3>
+                <div style="height: 400px; position: relative;">
+                    <canvas id="marginChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Data Table -->
+            <div class="data-table-container">
+                <h3>Monthly P&L Details</h3>
+                <div style="overflow-x: auto;">
+                    <table id="plTable">
+                        <thead>
+                            <tr>
+                                <th>Month</th>
+                                <th class="number">Revenue</th>
+                                <th class="number">COGS</th>
+                                <th class="number">Gross Profit</th>
+                                <th class="number">OpEx</th>
+                                <th class="number">EBITDA</th>
+                                <th class="number">GM %</th>
+                                <th class="number">EBITDA %</th>
+                            </tr>
+                        </thead>
+                        <tbody id="plTableBody">
+                            <!-- Populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Utility functions (inline for standalone operation)
+        function parseCSV(csvText) {
+            const lines = csvText.trim().split('\n');
+            const headers = lines[0].split(',').map(h => h.trim());
+            const data = [];
+            
+            for (let i = 1; i < lines.length; i++) {
+                const values = lines[i].split(',').map(v => v.trim());
+                const row = {};
+                headers.forEach((header, index) => {
+                    row[header] = values[index];
+                });
+                data.push(row);
+            }
+            
+            return data;
+        }
+
+        function formatCurrency(value, decimals = 0) {
+            const num = parseFloat(value);
+            if (isNaN(num)) return '$0';
+            return '$' + num.toLocaleString('en-US', {
+                minimumFractionDigits: decimals,
+                maximumFractionDigits: decimals
+            });
+        }
+
+        function formatPercent(value, decimals = 1) {
+            const num = parseFloat(value);
+            if (isNaN(num)) return '0%';
+            return num.toFixed(decimals) + '%';
+        }
+
+        function getMonthName(dateStr) {
+            const [year, month] = dateStr.split('-');
+            const date = new Date(year, parseInt(month) - 1);
+            return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+        }
+
+        // Data loading and processing
+        let plData = [];
+        let charts = {};
+
+        async function loadData() {
+            try {
+                const response = await fetch('../data/pl_monthly.csv');
+                const text = await response.text();
+                plData = parseCSV(text);
+                initializeDashboard();
+            } catch (error) {
+                console.error('Error loading data:', error);
+            }
+        }
+
+        function initializeDashboard() {
+            updateKPIs();
+            createCharts();
+            updateTable();
+            
+            // Event listeners
+            document.getElementById('scenario').addEventListener('change', () => {
+                updateKPIs();
+                updateCharts();
+                updateTable();
+            });
+            
+            document.getElementById('timeframe').addEventListener('change', () => {
+                updateCharts();
+                updateTable();
+            });
+        }
+
+        function updateKPIs() {
+            const scenario = document.getElementById('scenario').value;
+            const latestMonth = plData[plData.length - 1];
+            
+            let revenue, cogs, opex;
+            
+            if (scenario === 'budget') {
+                revenue = parseFloat(latestMonth.budget_revenue);
+                cogs = parseFloat(latestMonth.budget_cogs);
+                opex = parseFloat(latestMonth.budget_opex);
+            } else if (scenario === 'forecast') {
+                revenue = parseFloat(latestMonth.forecast_revenue);
+                cogs = parseFloat(latestMonth.forecast_cogs);
+                opex = parseFloat(latestMonth.forecast_opex);
+            } else {
+                revenue = parseFloat(latestMonth.revenue);
+                cogs = parseFloat(latestMonth.cogs);
+                opex = parseFloat(latestMonth.total_opex);
+            }
+            
+            const grossProfit = revenue - cogs;
+            const ebitda = grossProfit - opex;
+            const gmPercent = (grossProfit / revenue) * 100;
+            const ebitdaPercent = (ebitda / revenue) * 100;
+            
+            // Calculate YoY growth
+            const priorYearMonth = plData[plData.length - 13];
+            const yoyGrowth = priorYearMonth ? 
+                ((revenue - parseFloat(priorYearMonth.revenue)) / parseFloat(priorYearMonth.revenue)) * 100 : 0;
+            
+            const kpiHTML = `
+                <div class="kpi-card">
+                    <div class="kpi-label">Revenue (Latest)</div>
+                    <div class="kpi-value">${formatCurrency(revenue / 1000)}K</div>
+                    <div class="kpi-change ${yoyGrowth >= 0 ? 'positive' : 'negative'}">
+                        ${yoyGrowth >= 0 ? '↑' : '↓'} ${Math.abs(yoyGrowth).toFixed(1)}% YoY
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Gross Margin %</div>
+                    <div class="kpi-value">${gmPercent.toFixed(1)}%</div>
+                    <div class="kpi-change">Target: 70%</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">EBITDA</div>
+                    <div class="kpi-value">${formatCurrency(ebitda / 1000)}K</div>
+                    <div class="kpi-change ${ebitdaPercent >= 0 ? 'positive' : 'negative'}">
+                        ${ebitdaPercent.toFixed(1)}% margin
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Monthly Burn</div>
+                    <div class="kpi-value">${formatCurrency(Math.abs(opex) / 1000)}K</div>
+                    <div class="kpi-change">OpEx Rate</div>
+                </div>
+            `;
+            
+            document.getElementById('kpiGrid').innerHTML = kpiHTML;
+        }
+
+        function createCharts() {
+            const timeframe = parseInt(document.getElementById('timeframe').value);
+            const dataSubset = plData.slice(-timeframe);
+            
+            const labels = dataSubset.map(row => getMonthName(row.month));
+            
+            // Revenue Chart
+            const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+            charts.revenue = new Chart(revenueCtx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Actual',
+                            data: dataSubset.map(row => parseFloat(row.revenue)),
+                            borderColor: '#2563eb',
+                            backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                            tension: 0.3
+                        },
+                        {
+                            label: 'Budget',
+                            data: dataSubset.map(row => parseFloat(row.budget_revenue)),
+                            borderColor: '#9ca3af',
+                            borderDash: [5, 5],
+                            tension: 0.3
+                        },
+                        {
+                            label: 'Forecast',
+                            data: dataSubset.map(row => parseFloat(row.forecast_revenue)),
+                            borderColor: '#10b981',
+                            borderDash: [3, 3],
+                            tension: 0.3
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'top' }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: value => '$' + (value / 1000000).toFixed(1) + 'M'
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // P&L Waterfall Chart
+            const plCtx = document.getElementById('plChart').getContext('2d');
+            const latestMonth = dataSubset[dataSubset.length - 1];
+            const revenue = parseFloat(latestMonth.revenue);
+            const cogs = parseFloat(latestMonth.cogs);
+            const opex = parseFloat(latestMonth.total_opex);
+            const ebitda = revenue - cogs - opex;
+            
+            charts.pl = new Chart(plCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Revenue', 'COGS', 'Gross Profit', 'OpEx', 'EBITDA'],
+                    datasets: [{
+                        data: [revenue, -cogs, revenue - cogs, -opex, ebitda],
+                        backgroundColor: ['#10b981', '#ef4444', '#2563eb', '#f59e0b', '#8b5cf6']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            ticks: {
+                                callback: value => '$' + (value / 1000).toFixed(0) + 'K'
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Margin Analysis
+            const marginCtx = document.getElementById('marginChart').getContext('2d');
+            charts.margin = new Chart(marginCtx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Gross Margin %',
+                            data: dataSubset.map(row => {
+                                const rev = parseFloat(row.revenue);
+                                const gp = parseFloat(row.gross_profit);
+                                return (gp / rev) * 100;
+                            }),
+                            borderColor: '#10b981',
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'EBITDA Margin %',
+                            data: dataSubset.map(row => {
+                                const rev = parseFloat(row.revenue);
+                                const ebitda = parseFloat(row.ebitda);
+                                return (ebitda / rev) * 100;
+                            }),
+                            borderColor: '#2563eb',
+                            yAxisID: 'y'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'top' }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: value => value.toFixed(0) + '%'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateCharts() {
+            Object.values(charts).forEach(chart => chart.destroy());
+            createCharts();
+        }
+
+        function updateTable() {
+            const timeframe = parseInt(document.getElementById('timeframe').value);
+            const dataSubset = plData.slice(-timeframe);
+            
+            const tbody = document.getElementById('plTableBody');
+            tbody.innerHTML = dataSubset.map(row => {
+                const revenue = parseFloat(row.revenue);
+                const cogs = parseFloat(row.cogs);
+                const grossProfit = parseFloat(row.gross_profit);
+                const opex = parseFloat(row.total_opex);
+                const ebitda = parseFloat(row.ebitda);
+                const gmPercent = (grossProfit / revenue) * 100;
+                const ebitdaPercent = (ebitda / revenue) * 100;
+                
+                return `
+                    <tr>
+                        <td>${getMonthName(row.month)}</td>
+                        <td class="number">${formatCurrency(revenue)}</td>
+                        <td class="number">${formatCurrency(cogs)}</td>
+                        <td class="number">${formatCurrency(grossProfit)}</td>
+                        <td class="number">${formatCurrency(opex)}</td>
+                        <td class="number">${formatCurrency(ebitda)}</td>
+                        <td class="number">${gmPercent.toFixed(1)}%</td>
+                        <td class="number">${ebitdaPercent.toFixed(1)}%</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Initialize on page load
+        loadData();
+    </script>
+</body>
+</html>
