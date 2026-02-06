@@ -250,11 +250,11 @@ Feel free to use this as a template for your own finance portfolio projects. Att
 
 ## 📧 Contact
 
-**[Your Name]**  
+**Ralph Patrick Divina**  
 Finance Analyst | FP&A Specialist  
-📧 your.email@example.com  
-💼 [LinkedIn](https://linkedin.com/in/yourprofile)  
-🐙 [GitHub](https://github.com/yourusername)
+📧 rpatrickdivina@gmail.com  
+💼 [LinkedIn](https://www.linkedin.com/in/ralph-patrick-divina-55534614a/)  
+🐙 [GitHub](https://github.com/ralphpatrick)
 
 ---
 
