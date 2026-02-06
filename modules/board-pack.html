@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Board Pack | Finance OS</title>
+    <link rel="stylesheet" href="../assets/styles.css">
+    <style>
+        /* Print-specific styles */
+        @media print {
+            .module-header-bar,
+            .back-button,
+            .print-notice {
+                display: none;
+            }
+            
+            body {
+                background: white;
+            }
+            
+            .board-pack {
+                padding: 0;
+                max-width: 100%;
+            }
+            
+            .executive-summary {
+                page-break-inside: avoid;
+            }
+            
+            .metric-grid,
+            .commentary-section,
+            .highlights-grid {
+                page-break-inside: avoid;
+            }
+        }
+        
+        /* Board Pack specific styles */
+        .board-pack {
+            background: white;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: var(--spacing-xl);
+        }
+        
+        .pack-header {
+            text-align: center;
+            border-bottom: 3px solid var(--primary);
+            padding-bottom: var(--spacing-lg);
+            margin-bottom: var(--spacing-xl);
+        }
+        
+        .pack-title {
+            font-size: 2.5rem;
+            margin-bottom: var(--spacing-xs);
+            color: var(--gray-900);
+        }
+        
+        .pack-subtitle {
+            font-size: 1.125rem;
+            color: var(--gray-600);
+            font-weight: 400;
+        }
+        
+        .pack-date {
+            font-size: 0.938rem;
+            color: var(--gray-500);
+            margin-top: var(--spacing-sm);
+        }
+        
+        .metric-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: var(--spacing-md);
+            margin-bottom: var(--spacing-xl);
+        }
+        
+        .metric-card {
+            background: var(--gray-50);
+            padding: var(--spacing-md);
+            border-radius: var(--radius-md);
+            border-left: 4px solid var(--primary);
+        }
+        
+        .metric-label {
+            font-size: 0.875rem;
+            color: var(--gray-600);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: var(--spacing-xs);
+        }
+        
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin-bottom: var(--spacing-xs);
+        }
+        
+        .metric-delta {
+            font-size: 0.875rem;
+        }
+        
+        .commentary-section {
+            background: white;
+            border: 2px solid var(--gray-200);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-lg);
+            margin-bottom: var(--spacing-xl);
+        }
+        
+        .section-title {
+            font-size: 1.25rem;
+            color: var(--gray-900);
+            margin-bottom: var(--spacing-md);
+            font-weight: 700;
+            border-bottom: 2px solid var(--gray-200);
+            padding-bottom: var(--spacing-xs);
+        }
+        
+        .commentary-list {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .commentary-list li {
+            padding: var(--spacing-sm) 0;
+            padding-left: var(--spacing-md);
+            position: relative;
+            line-height: 1.7;
+            color: var(--gray-700);
+        }
+        
+        .commentary-list li::before {
+            content: "▪";
+            position: absolute;
+            left: 0;
+            color: var(--primary);
+            font-weight: bold;
+        }
+        
+        .highlights-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--spacing-md);
+            margin-bottom: var(--spacing-xl);
+        }
+        
+        .highlight-card {
+            background: var(--gray-50);
+            padding: var(--spacing-md);
+            border-radius: var(--radius-md);
+        }
+        
+        .highlight-card h4 {
+            font-size: 0.938rem;
+            color: var(--primary);
+            margin-bottom: var(--spacing-sm);
+            font-weight: 700;
+        }
+        
+        .highlight-card ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .highlight-card li {
+            padding: 0.25rem 0;
+            font-size: 0.875rem;
+            color: var(--gray-700);
+        }
+        
+        .print-notice {
+            background: var(--primary);
+            color: white;
+            padding: var(--spacing-md);
+            border-radius: var(--radius-md);
+            text-align: center;
+            margin-bottom: var(--spacing-lg);
+        }
+        
+        @media (max-width: 768px) {
+            .metric-grid,
+            .highlights-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body class="module-page">
+    <div class="module-header-bar">
+        <div class="container">
+            <a href="../index.html" class="back-button">← Back to Home</a>
+            <h1 class="module-title">Board Pack</h1>
+            <p class="module-subtitle">Executive Summary & Key Metrics</p>
+        </div>
+    </div>
+
+    <div class="dashboard">
+        <div class="container">
+            <div class="print-notice">
+                <strong>📄 Print-to-PDF Ready</strong> • Press Ctrl/Cmd + P to save as PDF
+            </div>
+            
+            <div class="board-pack">
+                <div class="pack-header">
+                    <h1 class="pack-title">Executive Summary</h1>
+                    <p class="pack-subtitle">Finance Operating System</p>
+                    <p class="pack-date" id="reportDate">Period Ending: December 2025</p>
+                </div>
+
+                <!-- Key Metrics -->
+                <div class="metric-grid" id="metricGrid">
+                    <!-- Populated by JavaScript -->
+                </div>
+
+                <!-- Executive Commentary -->
+                <div class="commentary-section">
+                    <h3 class="section-title">Executive Commentary</h3>
+                    <ul class="commentary-list" id="commentary">
+                        <!-- Populated by JavaScript -->
+                    </ul>
+                </div>
+
+                <!-- Performance Highlights -->
+                <div class="highlights-grid">
+                    <div class="highlight-card">
+                        <h4>Key Achievements</h4>
+                        <ul id="achievements">
+                            <!-- Populated by JavaScript -->
+                        </ul>
+                    </div>
+                    <div class="highlight-card">
+                        <h4>Focus Areas</h4>
+                        <ul id="focusAreas">
+                            <!-- Populated by JavaScript -->
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Financial Summary -->
+                <div class="commentary-section">
+                    <h3 class="section-title">Financial Summary</h3>
+                    <div style="overflow-x: auto;">
+                        <table id="summaryTable" style="width: 100%;">
+                            <thead>
+                                <tr>
+                                    <th>Metric</th>
+                                    <th class="number">Current Month</th>
+                                    <th class="number">Prior Month</th>
+                                    <th class="number">Budget</th>
+                                    <th class="number">Variance</th>
+                                </tr>
+                            </thead>
+                            <tbody id="summaryTableBody">
+                                <!-- Populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Operational Metrics -->
+                <div class="commentary-section">
+                    <h3 class="section-title">Operational Metrics</h3>
+                    <ul class="commentary-list" id="operationalMetrics">
+                        <!-- Populated by JavaScript -->
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Utility functions
+        function parseCSV(csvText) {
+            const lines = csvText.trim().split('\n');
+            const headers = lines[0].split(',').map(h => h.trim());
+            const data = [];
+            
+            for (let i = 1; i < lines.length; i++) {
+                const values = lines[i].split(',').map(v => v.trim());
+                const row = {};
+                headers.forEach((header, index) => {
+                    row[header] = values[index];
+                });
+                data.push(row);
+            }
+            
+            return data;
+        }
+
+        function formatCurrency(value, decimals = 0) {
+            const num = parseFloat(value);
+            if (isNaN(num)) return '$0';
+            return '$' + num.toLocaleString('en-US', {
+                minimumFractionDigits: decimals,
+                maximumFractionDigits: decimals
+            });
+        }
+
+        async function loadAllData() {
+            try {
+                const [plResponse, headcountResponse, channelResponse] = await Promise.all([
+                    fetch('../data/pl_monthly.csv'),
+                    fetch('../data/headcount.csv'),
+                    fetch('../data/channel_sales.csv')
+                ]);
+                
+                const [plText, headcountText, channelText] = await Promise.all([
+                    plResponse.text(),
+                    headcountResponse.text(),
+                    channelResponse.text()
+                ]);
+                
+                return {
+                    pl: parseCSV(plText),
+                    headcount: parseCSV(headcountText),
+                    channel: parseCSV(channelText)
+                };
+            } catch (error) {
+                console.error('Error loading data:', error);
+                return null;
+            }
+        }
+
+        function generateBoardPack(data) {
+            const latestPL = data.pl[data.pl.length - 1];
+            const priorPL = data.pl[data.pl.length - 2];
+            const latestHeadcount = data.headcount[data.headcount.length - 1];
+            
+            // Key Metrics
+            const revenue = parseFloat(latestPL.revenue);
+            const priorRevenue = parseFloat(priorPL.revenue);
+            const budgetRevenue = parseFloat(latestPL.budget_revenue);
+            const revenueGrowth = ((revenue - priorRevenue) / priorRevenue) * 100;
+            
+            const grossProfit = parseFloat(latestPL.gross_profit);
+            const gmPercent = (grossProfit / revenue) * 100;
+            
+            const ebitda = parseFloat(latestPL.ebitda);
+            const ebitdaPercent = (ebitda / revenue) * 100;
+            
+            const totalHeadcount = parseFloat(latestHeadcount.total);
+            const budgetHeadcount = parseFloat(latestHeadcount.budget_total);
+            
+            const opex = parseFloat(latestPL.total_opex);
+            const revenuePerEmployee = revenue / totalHeadcount;
+            
+            // Render Key Metrics
+            const metricHTML = `
+                <div class="metric-card">
+                    <div class="metric-label">Total Revenue</div>
+                    <div class="metric-value">${formatCurrency(revenue / 1000000, 1)}M</div>
+                    <div class="metric-delta ${revenueGrowth >= 0 ? 'positive' : 'negative'}">
+                        ${revenueGrowth >= 0 ? '↑' : '↓'} ${Math.abs(revenueGrowth).toFixed(1)}% MoM
+                    </div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Gross Margin</div>
+                    <div class="metric-value">${gmPercent.toFixed(1)}%</div>
+                    <div class="metric-delta">Target: 70%</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">EBITDA Margin</div>
+                    <div class="metric-value">${ebitdaPercent.toFixed(1)}%</div>
+                    <div class="metric-delta ${ebitdaPercent >= 20 ? 'positive' : 'negative'}">
+                        ${ebitdaPercent >= 20 ? 'Above' : 'Below'} 20% target
+                    </div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Headcount</div>
+                    <div class="metric-value">${totalHeadcount}</div>
+                    <div class="metric-delta">${totalHeadcount > budgetHeadcount ? 'Above' : 'At'} budget</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Rev per Employee</div>
+                    <div class="metric-value">${formatCurrency(revenuePerEmployee / 1000, 0)}K</div>
+                    <div class="metric-delta">Productivity metric</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Monthly Burn</div>
+                    <div class="metric-value">${formatCurrency(opex / 1000000, 1)}M</div>
+                    <div class="metric-delta">OpEx rate</div>
+                </div>
+            `;
+            document.getElementById('metricGrid').innerHTML = metricHTML;
+            
+            // Generate Commentary
+            const commentary = [];
+            
+            if (revenueGrowth > 5) {
+                commentary.push(`Strong revenue growth of ${revenueGrowth.toFixed(1)}% month-over-month, driven by continued market expansion and successful promotional campaigns.`);
+            } else if (revenueGrowth > 0) {
+                commentary.push(`Revenue increased ${revenueGrowth.toFixed(1)}% from prior month, maintaining steady growth trajectory.`);
+            } else {
+                commentary.push(`Revenue declined ${Math.abs(revenueGrowth).toFixed(1)}% from prior month; focus on pipeline acceleration recommended.`);
+            }
+            
+            if (gmPercent >= 70) {
+                commentary.push(`Gross margin of ${gmPercent.toFixed(1)}% exceeds target, reflecting strong unit economics and operational efficiency.`);
+            } else if (gmPercent >= 65) {
+                commentary.push(`Gross margin at ${gmPercent.toFixed(1)}% slightly below 70% target; monitor COGS trends closely.`);
+            } else {
+                commentary.push(`Gross margin at ${gmPercent.toFixed(1)}% requires attention; consider pricing or cost optimization initiatives.`);
+            }
+            
+            if (ebitdaPercent > 20) {
+                commentary.push(`EBITDA margin of ${ebitdaPercent.toFixed(1)}% demonstrates strong profitability and sustainable unit economics.`);
+            } else if (ebitdaPercent > 10) {
+                commentary.push(`EBITDA margin at ${ebitdaPercent.toFixed(1)}% shows improving profitability; continue OpEx discipline.`);
+            } else {
+                commentary.push(`EBITDA margin at ${ebitdaPercent.toFixed(1)}% indicates continued investment phase; path to profitability on track.`);
+            }
+            
+            const revenueVsBudget = ((revenue - budgetRevenue) / budgetRevenue) * 100;
+            if (Math.abs(revenueVsBudget) < 5) {
+                commentary.push(`Actual revenue tracking within 5% of budget, demonstrating strong forecast accuracy.`);
+            } else if (revenueVsBudget > 5) {
+                commentary.push(`Revenue ${revenueVsBudget.toFixed(1)}% ahead of budget, indicating potential upside to annual plan.`);
+            } else {
+                commentary.push(`Revenue ${Math.abs(revenueVsBudget).toFixed(1)}% below budget; pipeline coverage and conversion rates under review.`);
+            }
+            
+            document.getElementById('commentary').innerHTML = commentary.map(c => `<li>${c}</li>`).join('');
+            
+            // Achievements
+            const achievements = [
+                `Delivered ${formatCurrency(revenue)} in monthly revenue`,
+                `Maintained ${gmPercent.toFixed(0)}% gross margin`,
+                `Team size at ${totalHeadcount} employees`,
+                `Revenue per employee: ${formatCurrency(revenuePerEmployee)}`
+            ];
+            document.getElementById('achievements').innerHTML = achievements.map(a => `<li>${a}</li>`).join('');
+            
+            // Focus Areas
+            const focusAreas = [
+                ebitdaPercent < 20 ? 'Drive path to 20%+ EBITDA margin' : 'Sustain profitability trajectory',
+                'Optimize customer acquisition costs',
+                'Scale operational efficiency',
+                'Monitor cash runway and funding needs'
+            ];
+            document.getElementById('focusAreas').innerHTML = focusAreas.map(f => `<li>${f}</li>`).join('');
+            
+            // Summary Table
+            const summaryRows = [
+                { 
+                    metric: 'Revenue', 
+                    current: revenue, 
+                    prior: priorRevenue, 
+                    budget: budgetRevenue
+                },
+                {
+                    metric: 'Gross Profit',
+                    current: grossProfit,
+                    prior: parseFloat(priorPL.gross_profit),
+                    budget: budgetRevenue - parseFloat(latestPL.budget_cogs)
+                },
+                {
+                    metric: 'EBITDA',
+                    current: ebitda,
+                    prior: parseFloat(priorPL.ebitda),
+                    budget: budgetRevenue - parseFloat(latestPL.budget_cogs) - parseFloat(latestPL.budget_opex)
+                }
+            ];
+            
+            const tableHTML = summaryRows.map(row => {
+                const variance = row.current - row.budget;
+                const variancePercent = (variance / row.budget) * 100;
+                const varianceClass = variance >= 0 ? 'positive' : 'negative';
+                
+                return `
+                    <tr>
+                        <td>${row.metric}</td>
+                        <td class="number">${formatCurrency(row.current)}</td>
+                        <td class="number">${formatCurrency(row.prior)}</td>
+                        <td class="number">${formatCurrency(row.budget)}</td>
+                        <td class="number ${varianceClass}">
+                            ${formatCurrency(variance)} (${variancePercent.toFixed(1)}%)
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+            
+            document.getElementById('summaryTableBody').innerHTML = tableHTML;
+            
+            // Operational Metrics
+            const operational = [
+                `Headcount at ${totalHeadcount}, ${totalHeadcount - budgetHeadcount >= 0 ? 'above' : 'below'} budget by ${Math.abs(totalHeadcount - budgetHeadcount)} employees`,
+                `Revenue per employee: ${formatCurrency(revenuePerEmployee)} (productivity indicator)`,
+                `OpEx as % of revenue: ${(opex / revenue * 100).toFixed(1)}%`,
+                `Gross margin maintained at industry-leading levels`
+            ];
+            document.getElementById('operationalMetrics').innerHTML = operational.map(o => `<li>${o}</li>`).join('');
+        }
+
+        // Load and render
+        loadAllData().then(data => {
+            if (data) {
+                generateBoardPack(data);
+            }
+        });
+    </script>
+</body>
+</html>
