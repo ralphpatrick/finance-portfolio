@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Systems Migration Case | Finance OS</title>
+  <link rel="stylesheet" href="../assets/styles.css" />
+</head>
+
+<body class="module-page">
+  <nav class="navbar">
+    <div class="container">
+      <div class="nav-brand">
+        <h1>Finance Operating System</h1>
+      </div>
+    </div>
+  </nav>
+
+  <div class="module-header-bar">
+    <div class="container">
+      <a href="../index.html" class="back-button">← Back to Home</a>
+      <h1 class="module-title">Systems Migration Case</h1>
+      <p class="module-subtitle">Manual → ERP migration: process map, data steps, and controls added</p>
+    </div>
+  </div>
+
+  <div class="dashboard">
+    <div class="container">
+
+      <!-- Controls -->
+      <div class="controls">
+        <div class="control-group">
+          <label for="phase">Phase:</label>
+          <select id="phase">
+            <option value="discover" selected>Discover</option>
+            <option value="design">Design</option>
+            <option value="migrate">Migrate</option>
+            <option value="validate">Validate</option>
+            <option value="cutover">Cutover</option>
+          </select>
+        </div>
+        <div class="control-group">
+          <label for="scope">Scope:</label>
+          <select id="scope">
+            <option value="lending" selected>Lending Ops Finance</option>
+            <option value="p2p">P2P</option>
+            <option value="o2c">O2C</option>
+          </select>
+        </div>
+        <div class="control-group">
+          <label for="cutoverDate">Target Cutover:</label>
+          <input id="cutoverDate" type="date" />
+        </div>
+      </div>
+
+      <!-- KPI Cards -->
+      <div class="kpi-grid" id="kpiGrid"></div>
+
+      <!-- Before / After Process Map -->
+      <div class="chart-container">
+        <h3>Before / After Process Map</h3>
+        <div class="split">
+          <div class="panel">
+            <h4 style="margin:0 0 0.75rem;">Before (Manual)</h4>
+            <div class="map" id="beforeMap"></div>
+          </div>
+          <div class="panel">
+            <h4 style="margin:0 0 0.75rem;">After (ERP)</h4>
+            <div class="map" id="afterMap"></div>
+          </div>
+        </div>
+        <p style="margin-top: 0.75rem; font-size: 0.875rem; opacity: 0.9;">
+          ELI5: Before = lots of sticky notes and people texting each other. After = one “shared brain” (ERP) that logs everything automatically.
+        </p>
+      </div>
+
+      <!-- Data Migration Steps -->
+      <div class="data-table-container">
+        <h3>Data Migration Steps</h3>
+        <div style="overflow-x:auto;">
+          <table>
+            <thead>
+              <tr>
+                <th style="min-width:260px;">Step</th>
+                <th style="min-width:170px;">Owner</th>
+                <th style="min-width:150px;">Output</th>
+                <th style="min-width:160px;">Status</th>
+                <th style="min-width:260px;">Notes</th>
+              </tr>
+            </thead>
+            <tbody id="stepsBody"></tbody>
+          </table>
+        </div>
+        <div style="margin-top: 0.75rem; display:flex; gap:0.5rem; flex-wrap:wrap;">
+          <button class="module-button" id="markPhaseBtn" type="button">Auto-Mark by Phase</button>
+          <button class="module-button" id="copyPlanBtn" type="button">Copy Migration Plan</button>
+          <button class="module-button" id="resetPlanBtn" type="button">Reset</button>
+        </div>
+      </div>
+
+      <!-- Controls Added + Risks -->
+      <div class="chart-container">
+        <h3>Controls Added (Audit Boost)</h3>
+        <div class="data-table-container" style="margin-top: 1rem;">
+          <div style="overflow-x:auto;">
+            <table>
+              <thead>
+                <tr>
+                  <th style="min-width:220px;">Control</th>
+                  <th style="min-width:220px;">Why it exists</th>
+                  <th style="min-width:200px;">Evidence</th>
+                  <th style="min-width:120px;">Impact</th>
+                </tr>
+              </thead>
+              <tbody id="controlsAddedBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <style>
+    .split{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-top: 0.75rem;
+    }
+    .panel{
+      border: 1px solid rgba(0,0,0,0.08);
+      border-radius: 12px;
+      padding: 0.9rem;
+      background: rgba(255,255,255,0.6);
+    }
+    .map{
+      display:flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    .node{
+      border: 1px solid rgba(0,0,0,0.10);
+      border-radius: 12px;
+      padding: 0.75rem;
+      font-size: 0.9rem;
+      background: rgba(255,255,255,0.7);
+      position: relative;
+    }
+    .node small{
+      display:block;
+      opacity: 0.85;
+      margin-top: 0.15rem;
+      font-size: 0.8rem;
+    }
+    .node:after{
+      content: "↓";
+      position:absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: -18px;
+      opacity: 0.45;
+      font-size: 1.1rem;
+    }
+    .node.last:after{ content: ""; }
+    @media (max-width: 1100px) {
+      .split{ grid-template-columns: 1fr; }
+    }
+  </style>
+
+  <script>
+    function copyText(text){ navigator.clipboard.writeText(text).then(()=>alert('Copied!')); }
+
+    const maps = {
+      before: [
+        { title:'Loan request logged in sheet', note:'Manual encoding + human errors' },
+        { title:'Approval via chat/email', note:'Hard to audit who approved what' },
+        { title:'Disbursement recorded separately', note:'Bank vs sheet mismatches' },
+        { title:'Collections tracked in multiple files', note:'Duplicate / missing entries' },
+        { title:'Month-end manual cleanup', note:'Time sink + late closes' },
+      ],
+      after: [
+        { title:'Application captured in system', note:'Single source of truth' },
+        { title:'Role-based approval workflow', note:'Approver + timestamp captured' },
+        { title:'Automated postings + reference IDs', note:'Traceable GL mapping' },
+        { title:'Collections + aging auto-generated', note:'Faster follow-ups' },
+        { title:'Close checklist + audit trail exports', note:'Audit-ready by design' },
+      ]
+    };
+
+    const baseSteps = [
+      { step:'Define scope + success metrics', owner:'Project Lead', output:'Scope doc', status:'Not Started', notes:'' , phase:'discover' },
+      { step:'Extract master data (customers, products, COA)', owner:'Finance', output:'Master exports', status:'Not Started', notes:'' , phase:'discover' },
+      { step:'Design mappings (COA, dimensions, journals)', owner:'Finance/Systems', output:'Mapping sheet', status:'Not Started', notes:'' , phase:'design' },
+      { step:'Build migration templates + validation rules', owner:'Systems', output:'Templates', status:'Not Started', notes:'' , phase:'design' },
+      { step:'Load opening balances + trial import', owner:'Finance', output:'Test import', status:'Not Started', notes:'' , phase:'migrate' },
+      { step:'Reconcile: ERP vs source totals', owner:'Finance', output:'Tie-out pack', status:'Not Started', notes:'' , phase:'validate' },
+      { step:'UAT with business users', owner:'Ops + Finance', output:'UAT sign-off', status:'Not Started', notes:'' , phase:'validate' },
+      { step:'Cutover plan + freeze window', owner:'Project Lead', output:'Cutover runbook', status:'Not Started', notes:'' , phase:'cutover' },
+      { step:'Go-live + hypercare', owner:'All', output:'Issue log', status:'Not Started', notes:'' , phase:'cutover' },
+    ];
+
+    const controlsAdded = [
+      { c:'Immutable reference IDs', why:'Stops “mystery edits”', ev:'System audit log export', impact:'High' },
+      { c:'Approval workflow + roles', why:'Prevents unauthorized postings', ev:'Role matrix + approval history', impact:'High' },
+      { c:'Validation rules at input', why:'Blocks garbage data', ev:'Validation config screenshots', impact:'Med' },
+      { c:'Automated reconciliations', why:'Catches gaps fast', ev:'Recon reports', impact:'Med' },
+    ];
+
+    let steps = JSON.parse(JSON.stringify(baseSteps));
+
+    function renderMaps(){
+      const beforeEl = document.getElementById('beforeMap');
+      const afterEl  = document.getElementById('afterMap');
+
+      beforeEl.innerHTML = maps.before.map((n,i)=>`
+        <div class="node ${i===maps.before.length-1?'last':''}">
+          <strong>${n.title}</strong>
+          <small>${n.note}</small>
+        </div>
+      `).join('');
+
+      afterEl.innerHTML = maps.after.map((n,i)=>`
+        <div class="node ${i===maps.after.length-1?'last':''}">
+          <strong>${n.title}</strong>
+          <small>${n.note}</small>
+        </div>
+      `).join('');
+    }
+
+    function renderSteps(){
+      const body = document.getElementById('stepsBody');
+      body.innerHTML = steps.map((r, idx) => `
+        <tr>
+          <td>${r.step}</td>
+          <td><input data-idx="${idx}" data-field="owner" value="${r.owner}" style="width:100%; padding:0.35rem;" /></td>
+          <td>${r.output}</td>
+          <td>
+            <select data-idx="${idx}" data-field="status" style="width:100%; padding:0.35rem;">
+              ${['Not Started','In Progress','Done','Blocked'].map(s=>`<option ${r.status===s?'selected':''}>${s}</option>`).join('')}
+            </select>
+          </td>
+          <td><input data-idx="${idx}" data-field="notes" value="${r.notes}" placeholder="notes…" style="width:100%; padding:0.35rem;" /></td>
+        </tr>
+      `).join('');
+
+      body.querySelectorAll('input, select').forEach(el => {
+        el.addEventListener('input', (e) => {
+          const idx = Number(e.target.dataset.idx);
+          const field = e.target.dataset.field;
+          steps[idx][field] = e.target.value;
+          renderKPIs();
+        });
+      });
+
+      renderKPIs();
+    }
+
+    function renderControlsAdded(){
+      const body = document.getElementById('controlsAddedBody');
+      body.innerHTML = controlsAdded.map(x => `
+        <tr>
+          <td>${x.c}</td>
+          <td>${x.why}</td>
+          <td>${x.ev}</td>
+          <td>${x.impact}</td>
+        </tr>
+      `).join('');
+    }
+
+    function renderKPIs(){
+      const done = steps.filter(s => s.status === 'Done').length;
+      const total = steps.length;
+      const progress = total ? Math.round((done/total)*100) : 0;
+
+      const blocked = steps.filter(s => s.status === 'Blocked').length;
+      const phase = document.getElementById('phase').value;
+
+      const kpiHTML = `
+        <div class="kpi-card">
+          <div class="kpi-label">Plan Progress</div>
+          <div class="kpi-value">${progress}%</div>
+          <div class="kpi-change ${progress >= 60 ? 'positive' : 'negative'}">${done}/${total} done</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Blocked Items</div>
+          <div class="kpi-value">${blocked}</div>
+          <div class="kpi-change ${blocked === 0 ? 'positive' : 'negative'}">Needs resolution</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Current Phase</div>
+          <div class="kpi-value">${phase.toUpperCase()}</div>
+          <div class="kpi-change">Operating mode</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Controls Added</div>
+          <div class="kpi-value">${controlsAdded.length}</div>
+          <div class="kpi-change">Audit uplift</div>
+        </div>
+      `;
+      document.getElementById('kpiGrid').innerHTML = kpiHTML;
+    }
+
+    document.getElementById('markPhaseBtn').addEventListener('click', () => {
+      const phase = document.getElementById('phase').value;
+
+      // Simple rule: everything before selected phase -> Done, selected phase -> In Progress, after -> Not Started
+      const order = ['discover','design','migrate','validate','cutover'];
+      const pIdx = order.indexOf(phase);
+
+      steps = steps.map(s => {
+        const sIdx = order.indexOf(s.phase);
+        let status = s.status;
+
+        if (sIdx < pIdx) status = 'Done';
+        if (sIdx === pIdx) status = 'In Progress';
+        if (sIdx > pIdx) status = 'Not Started';
+
+        return { ...s, status };
+      });
+
+      renderSteps();
+    });
+
+    document.getElementById('copyPlanBtn').addEventListener('click', () => {
+      const lines = [
+        'Step\tOwner\tOutput\tStatus\tNotes',
+        ...steps.map(s => `${s.step}\t${s.owner}\t${s.output}\t${s.status}\t${s.notes || ''}`)
+      ];
+      copyText(lines.join('\n'));
+    });
+
+    document.getElementById('resetPlanBtn').addEventListener('click', () => {
+      steps = JSON.parse(JSON.stringify(baseSteps));
+      renderSteps();
+    });
+
+    document.getElementById('phase').addEventListener('change', renderKPIs);
+    document.getElementById('scope').addEventListener('change', renderKPIs);
+    document.getElementById('cutoverDate').addEventListener('change', renderKPIs);
+
+    renderMaps();
+    renderSteps();
+    renderControlsAdded();
+  </script>
+</body>
+</html>
