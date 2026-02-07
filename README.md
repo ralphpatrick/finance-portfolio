@@ -268,4 +268,4 @@ Finance Analyst | FP&A Specialist
 
 **Built with ❤️ for finance professionals who code (and coders who do finance)**
 
-*Last updated: February 2025*
+*Last updated: February 2026*
