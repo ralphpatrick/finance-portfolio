@@ -18,6 +18,18 @@
 
     <div class="dashboard">
         <div class="container">
+            <!-- Upload Controls -->
+            <div class="controls">
+                <div class="control-group">
+                    <label for="vendorUpload">Upload Vendor Data (CSV):</label>
+                    <input type="file" id="vendorUpload" accept=".csv" style="font-size: 0.875rem;">
+                </div>
+                <div class="control-group">
+                    <label for="accrualUpload">Upload Accrual Data (CSV):</label>
+                    <input type="file" id="accrualUpload" accept=".csv" style="font-size: 0.875rem;">
+                </div>
+            </div>
+
             <!-- KPI Cards -->
             <div class="kpi-grid" id="kpiGrid">
                 <!-- Populated by JavaScript -->
@@ -367,6 +379,29 @@
 
         // Initialize
         loadData();
+
+        // CSV Upload Handlers
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('vendorUpload')?.addEventListener('change', async (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const text = await file.text();
+                    vendorData = parseCSV(text);
+                    initializeDashboard();
+                    alert('Custom vendor CSV loaded!');
+                }
+            });
+            
+            document.getElementById('accrualUpload')?.addEventListener('change', async (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const text = await file.text();
+                    accrualData = parseCSV(text);
+                    initializeDashboard();
+                    alert('Custom accrual CSV loaded!');
+                }
+            });
+        });
     </script>
 </body>
 </html>

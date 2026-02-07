@@ -18,6 +18,18 @@
 
     <div class="dashboard">
         <div class="container">
+            <!-- Upload Control -->
+            <div class="controls">
+                <div class="control-group">
+                    <label for="promoUpload">Upload Promo Data (CSV):</label>
+                    <input type="file" id="promoUpload" accept=".csv" style="font-size: 0.875rem;">
+                </div>
+                <div class="control-group">
+                    <label for="channelUpload">Upload Channel Data (CSV):</label>
+                    <input type="file" id="channelUpload" accept=".csv" style="font-size: 0.875rem;">
+                </div>
+            </div>
+
             <!-- KPI Cards -->
             <div class="kpi-grid" id="kpiGrid">
                 <!-- Populated by JavaScript -->
@@ -348,6 +360,29 @@
 
         // Initialize
         loadData();
+
+        // CSV Upload Handlers
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('promoUpload')?.addEventListener('change', async (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const text = await file.text();
+                    promoData = parseCSV(text);
+                    initializeDashboard();
+                    alert('Custom promo CSV loaded!');
+                }
+            });
+            
+            document.getElementById('channelUpload')?.addEventListener('change', async (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const text = await file.text();
+                    channelData = parseCSV(text);
+                    initializeDashboard();
+                    alert('Custom channel CSV loaded!');
+                }
+            });
+        });
     </script>
 </body>
 </html>

@@ -36,6 +36,10 @@
                         <option value="24">All 24 Months</option>
                     </select>
                 </div>
+                <div class="control-group">
+                    <label for="csvUpload">Upload Your Data:</label>
+                    <input type="file" id="csvUpload" accept=".csv" style="font-size: 0.875rem;">
+                </div>
             </div>
 
             <!-- KPI Cards -->
@@ -147,6 +151,22 @@
                 console.error('Error loading data:', error);
             }
         }
+
+        // CSV Upload Handler
+        document.addEventListener('DOMContentLoaded', () => {
+            const uploadInput = document.getElementById('csvUpload');
+            if (uploadInput) {
+                uploadInput.addEventListener('change', async (e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                        const text = await file.text();
+                        plData = parseCSV(text);
+                        initializeDashboard();
+                        alert('Custom CSV loaded successfully!');
+                    }
+                });
+            }
+        });
 
         function initializeDashboard() {
             updateKPIs();
