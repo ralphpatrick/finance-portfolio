@@ -1,0 +1,3 @@
+month,direct_revenue,direct_cogs,partner_revenue,partner_cogs,marketplace_revenue,marketplace_cogs,direct_margin_pct,partner_margin_pct,marketplace_margin_pct
+2024-01,625000,156250,437500,140000,187500,78750,75.0,68.0,58.0
+2024-02,660000,165000,462000,147840,198000,83160,75.0,68.0,58.0

@@ -2,7 +2,7 @@
 
 > **A comprehensive FP&A portfolio project demonstrating strategic finance capabilities across forecasting, sales analytics, operations, executive reporting, and treasury management.**
 
-🔗 **[Live Demo](https://ralphpatrick.github.io/finance-portfolio/)**
+🔗 **[Live Demo](https://yourusername.github.io/finance-operating-system/)** *(Replace with your GitHub Pages URL)*
 
 ---
 
@@ -250,11 +250,11 @@ Feel free to use this as a template for your own finance portfolio projects. Att
 
 ## 📧 Contact
 
-**Ralph Patrick Divina**  
+**[Your Name]**  
 Finance Analyst | FP&A Specialist  
-📧 rpatrickdivina@gmail.com  
-💼 [LinkedIn](https://www.linkedin.com/in/ralph-patrick-divina-55534614a/)  
-🐙 [GitHub](https://github.com/ralphpatrick)
+📧 your.email@example.com  
+💼 [LinkedIn](https://linkedin.com/in/yourprofile)  
+🐙 [GitHub](https://github.com/yourusername)
 
 ---
 
@@ -268,4 +268,4 @@ Finance Analyst | FP&A Specialist
 
 **Built with ❤️ for finance professionals who code (and coders who do finance)**
 
-*Last updated: February 2026*
+*Last updated: February 2025*
