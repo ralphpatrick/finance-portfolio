@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Month-End Engine | Finance OS</title>
+  <link rel="stylesheet" href="../assets/styles.css" />
+</head>
+
+<body class="module-page">
+  <nav class="navbar">
+    <div class="container">
+      <div class="nav-brand">
+        <h1>Finance Operating System</h1>
+      </div>
+    </div>
+  </nav>
+
+  <div class="module-header-bar">
+    <div class="container">
+      <a href="../index.html" class="back-button">← Back to Home</a>
+      <h1 class="module-title">Month-End Engine</h1>
+      <p class="module-subtitle">Day 1–5 Close Timeline + Accruals/Deferrals + Recons + JE Summary</p>
+    </div>
+  </div>
+
+  <div class="dashboard">
+    <div class="container">
+
+      <!-- Controls -->
+      <div class="controls">
+        <div class="control-group">
+          <label for="closeMonth">Close Month:</label>
+          <input id="closeMonth" type="month" />
+        </div>
+        <div class="control-group">
+          <label for="closeOwner">Owner:</label>
+          <input id="closeOwner" type="text" placeholder="e.g., Finance / Accounting Lead" />
+        </div>
+        <div class="control-group">
+          <label for="closeStatus">Status:</label>
+          <select id="closeStatus">
+            <option value="ontrack" selected>On Track</option>
+            <option value="atRisk">At Risk</option>
+            <option value="blocked">Blocked</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- KPI Cards -->
+      <div class="kpi-grid" id="kpiGrid"></div>
+
+      <!-- Day 1–5 Timeline -->
+      <div class="chart-container">
+        <h3>Day 1–5 Close Timeline</h3>
+
+        <div class="timeline" id="timeline"></div>
+
+        <p style="margin-top: 0.75rem; font-size: 0.875rem; opacity: 0.9;">
+          ELI5: Imagine month-end like packing your bags for a flight. Day 1 is “gather everything”, Day 2 is “check nothing is missing”,
+          Day 3 is “fix mistakes”, Day 4 is “final check”, Day 5 is “send it.”
+        </p>
+      </div>
+
+      <!-- Reconciliation Checklist -->
+      <div class="data-table-container">
+        <h3>Reconciliation Checklist</h3>
+        <div style="overflow-x:auto;">
+          <table>
+            <thead>
+              <tr>
+                <th style="min-width: 260px;">Task</th>
+                <th style="min-width: 160px;">Owner</th>
+                <th style="min-width: 120px;">Due</th>
+                <th style="min-width: 140px;">Status</th>
+                <th style="min-width: 240px;">Notes</th>
+              </tr>
+            </thead>
+            <tbody id="reconBody"></tbody>
+          </table>
+        </div>
+        <div style="margin-top: 0.75rem; display:flex; gap:0.5rem; flex-wrap:wrap;">
+          <button class="module-button" id="markAllDoneBtn" type="button">Mark All Done</button>
+          <button class="module-button" id="resetChecklistBtn" type="button">Reset</button>
+        </div>
+      </div>
+
+      <!-- Accrual / Deferral Builder -->
+      <div class="chart-container">
+        <h3>Accruals / Deferrals Builder</h3>
+
+        <div class="controls" style="margin-top: 0.75rem;">
+          <div class="control-group">
+            <label for="jeType">Type:</label>
+            <select id="jeType">
+              <option value="accrual" selected>Accrual (Expense not invoiced yet)</option>
+              <option value="deferral">Deferral (Prepaid / Unearned portion)</option>
+            </select>
+          </div>
+
+          <div class="control-group">
+            <label for="jeDesc">Description:</label>
+            <input id="jeDesc" type="text" placeholder="e.g., January utilities estimate" />
+          </div>
+
+          <div class="control-group">
+            <label for="jeAmount">Amount:</label>
+            <input id="jeAmount" type="number" min="0" step="0.01" placeholder="0.00" />
+          </div>
+
+          <div class="control-group">
+            <label for="jeDebit">Debit Account:</label>
+            <input id="jeDebit" type="text" placeholder="e.g., Utilities Expense" />
+          </div>
+
+          <div class="control-group">
+            <label for="jeCredit">Credit Account:</label>
+            <input id="jeCredit" type="text" placeholder="e.g., Accrued Liabilities" />
+          </div>
+
+          <div class="control-group">
+            <label>&nbsp;</label>
+            <button class="module-button" id="addJEBtn" type="button">Add JE</button>
+          </div>
+        </div>
+
+        <div class="data-table-container" style="margin-top: 1rem;">
+          <h3 style="margin-bottom: 0.75rem;">JE Summary</h3>
+          <div style="overflow-x:auto;">
+            <table>
+              <thead>
+                <tr>
+                  <th style="min-width: 160px;">Type</th>
+                  <th style="min-width: 260px;">Description</th>
+                  <th style="min-width: 220px;">Debit</th>
+                  <th style="min-width: 220px;">Credit</th>
+                  <th class="number" style="min-width: 140px;">Amount</th>
+                  <th style="min-width: 120px;">Action</th>
+                </tr>
+              </thead>
+              <tbody id="jeBody"></tbody>
+              <tfoot>
+                <tr>
+                  <th colspan="4" style="text-align:right;">Total</th>
+                  <th class="number" id="jeTotal">$0.00</th>
+                  <th></th>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+
+          <div style="margin-top: 0.75rem; display:flex; gap:0.5rem; flex-wrap:wrap;">
+            <button class="module-button" id="exportJEBtn" type="button">Copy JE Summary</button>
+            <button class="module-button" id="clearJEBtn" type="button">Clear JEs</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Variance Commentary Generator -->
+      <div class="chart-container">
+        <h3>Variance Commentary Generator</h3>
+
+        <div class="controls" style="margin-top:0.75rem;">
+          <div class="control-group">
+            <label for="varMetric">Metric:</label>
+            <select id="varMetric">
+              <option value="Revenue">Revenue</option>
+              <option value="COGS">COGS</option>
+              <option value="OpEx" selected>OpEx</option>
+              <option value="EBITDA">EBITDA</option>
+              <option value="Cash">Cash</option>
+            </select>
+          </div>
+
+          <div class="control-group">
+            <label for="varDirection">Direction:</label>
+            <select id="varDirection">
+              <option value="favorable" selected>Favorable</option>
+              <option value="unfavorable">Unfavorable</option>
+            </select>
+          </div>
+
+          <div class="control-group">
+            <label for="varAmount">Variance Amount:</label>
+            <input id="varAmount" type="number" step="0.01" placeholder="0.00" />
+          </div>
+
+          <div class="control-group">
+            <label for="varDriver">Driver:</label>
+            <input id="varDriver" type="text" placeholder="e.g., delayed vendor billing, higher volume, FX" />
+          </div>
+
+          <div class="control-group">
+            <label>&nbsp;</label>
+            <button class="module-button" id="genCommentBtn" type="button">Generate</button>
+          </div>
+        </div>
+
+        <div class="data-table-container" style="margin-top: 1rem;">
+          <h3 style="margin-bottom: 0.75rem;">Commentary Output</h3>
+          <textarea id="commentOut" style="width:100%; min-height: 140px; padding: 0.75rem; font-size: 0.9rem;"></textarea>
+          <div style="margin-top: 0.75rem; display:flex; gap:0.5rem; flex-wrap:wrap;">
+            <button class="module-button" id="copyCommentBtn" type="button">Copy Commentary</button>
+            <button class="module-button" id="clearCommentBtn" type="button">Clear</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <style>
+    /* Tiny module-only helpers (won't break your global CSS) */
+    .timeline {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(160px, 1fr));
+      gap: 0.75rem;
+      margin-top: 0.75rem;
+    }
+    .timeline-card {
+      border: 1px solid rgba(0,0,0,0.08);
+      border-radius: 12px;
+      padding: 0.9rem;
+      background: rgba(255,255,255,0.6);
+    }
+    .timeline-day {
+      font-weight: 700;
+      font-size: 0.95rem;
+      margin-bottom: 0.25rem;
+    }
+    .timeline-items {
+      margin: 0.5rem 0 0;
+      padding-left: 1rem;
+      font-size: 0.875rem;
+      opacity: 0.95;
+    }
+    .pill {
+      display:inline-block;
+      padding: 0.15rem 0.5rem;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      border: 1px solid rgba(0,0,0,0.12);
+      margin-left: 0.35rem;
+      opacity: 0.9;
+    }
+    @media (max-width: 1100px) {
+      .timeline { grid-template-columns: 1fr; }
+    }
+  </style>
+
+  <script>
+    // ---------- Utilities ----------
+    function money(n) {
+      const num = Number(n || 0);
+      return '$' + num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function copyText(text) {
+      navigator.clipboard.writeText(text).then(() => alert('Copied!'));
+    }
+
+    // ---------- KPI + Timeline ----------
+    const state = {
+      checklist: [
+        { task: 'Bank reconciliation (all accounts)', owner: 'Finance', due: 'Day 1', status: 'Pending', notes: '' },
+        { task: 'AR reconciliation (subledger vs GL)', owner: 'Accounting', due: 'Day 2', status: 'Pending', notes: '' },
+        { task: 'AP reconciliation (aging vs GL)', owner: 'Accounting', due: 'Day 2', status: 'Pending', notes: '' },
+        { task: 'Accruals review (utilities, payroll, vendors)', owner: 'Finance', due: 'Day 3', status: 'Pending', notes: '' },
+        { task: 'Deferred revenue / prepaid amortization', owner: 'Accounting', due: 'Day 3', status: 'Pending', notes: '' },
+        { task: 'Variance review (Budget vs Actual)', owner: 'FP&A', due: 'Day 4', status: 'Pending', notes: '' },
+        { task: 'Final close + reporting pack', owner: 'Finance Lead', due: 'Day 5', status: 'Pending', notes: '' },
+      ],
+      jes: []
+    };
+
+    const timelineData = [
+      { day: 'Day 1', badge: 'Capture', items: ['Lock cutoff', 'Pull bank statements', 'Start bank recon', 'Extract subledgers'] },
+      { day: 'Day 2', badge: 'Reconcile', items: ['AR/AP ties', 'Intercompany checks', 'Revenue completeness checks'] },
+      { day: 'Day 3', badge: 'Adjust', items: ['Accruals/deferrals', 'JE reviews', 'Error fixes'] },
+      { day: 'Day 4', badge: 'Explain', items: ['Budget vs Actual', 'Variance commentary', 'Management notes'] },
+      { day: 'Day 5', badge: 'Publish', items: ['Final lock', 'Report pack', 'Stakeholder send-out'] },
+    ];
+
+    function renderTimeline() {
+      const el = document.getElementById('timeline');
+      el.innerHTML = timelineData.map(d => `
+        <div class="timeline-card">
+          <div class="timeline-day">${d.day}<span class="pill">${d.badge}</span></div>
+          <ul class="timeline-items">
+            ${d.items.map(i => `<li>${i}</li>`).join('')}
+          </ul>
+        </div>
+      `).join('');
+    }
+
+    function renderKPIs() {
+      const doneCount = state.checklist.filter(x => x.status === 'Done').length;
+      const totalCount = state.checklist.length;
+      const progress = totalCount ? Math.round((doneCount / totalCount) * 100) : 0;
+
+      const jeTotal = state.jes.reduce((s, x) => s + Number(x.amount || 0), 0);
+
+      const status = document.getElementById('closeStatus').value;
+      const statusLabel = status === 'ontrack' ? 'On Track' : status === 'atRisk' ? 'At Risk' : 'Blocked';
+
+      const kpiHTML = `
+        <div class="kpi-card">
+          <div class="kpi-label">Checklist Progress</div>
+          <div class="kpi-value">${progress}%</div>
+          <div class="kpi-change ${progress >= 70 ? 'positive' : 'negative'}">
+            ${doneCount}/${totalCount} done
+          </div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">JE Count</div>
+          <div class="kpi-value">${state.jes.length}</div>
+          <div class="kpi-change">Accruals + Deferrals</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">JE Total</div>
+          <div class="kpi-value">${money(jeTotal)}</div>
+          <div class="kpi-change">Gross impact (not net)</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Close Status</div>
+          <div class="kpi-value">${statusLabel}</div>
+          <div class="kpi-change">Owner-driven</div>
+        </div>
+      `;
+      document.getElementById('kpiGrid').innerHTML = kpiHTML;
+    }
+
+    // ---------- Checklist ----------
+    function renderChecklist() {
+      const body = document.getElementById('reconBody');
+      body.innerHTML = state.checklist.map((row, idx) => `
+        <tr>
+          <td>${row.task}</td>
+          <td>
+            <input data-idx="${idx}" data-field="owner" value="${row.owner}" style="width: 100%; padding: 0.35rem;" />
+          </td>
+          <td>
+            <select data-idx="${idx}" data-field="due" style="width: 100%; padding: 0.35rem;">
+              ${['Day 1','Day 2','Day 3','Day 4','Day 5'].map(d => `<option ${row.due===d?'selected':''}>${d}</option>`).join('')}
+            </select>
+          </td>
+          <td>
+            <select data-idx="${idx}" data-field="status" style="width: 100%; padding: 0.35rem;">
+              ${['Pending','In Progress','Done'].map(s => `<option ${row.status===s?'selected':''}>${s}</option>`).join('')}
+            </select>
+          </td>
+          <td>
+            <input data-idx="${idx}" data-field="notes" value="${row.notes}" placeholder="quick notes…" style="width: 100%; padding: 0.35rem;" />
+          </td>
+        </tr>
+      `).join('');
+
+      body.querySelectorAll('input, select').forEach(el => {
+        el.addEventListener('input', (e) => {
+          const idx = Number(e.target.dataset.idx);
+          const field = e.target.dataset.field;
+          state.checklist[idx][field] = e.target.value;
+          renderKPIs();
+        });
+      });
+    }
+
+    // ---------- JE Summary ----------
+    function renderJEs() {
+      const body = document.getElementById('jeBody');
+      body.innerHTML = state.jes.map((je, idx) => `
+        <tr>
+          <td>${je.type}</td>
+          <td>${je.desc}</td>
+          <td>${je.debit}</td>
+          <td>${je.credit}</td>
+          <td class="number">${money(je.amount)}</td>
+          <td><button class="module-button" type="button" data-remove="${idx}">Remove</button></td>
+        </tr>
+      `).join('');
+
+      body.querySelectorAll('button[data-remove]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const idx = Number(btn.dataset.remove);
+          state.jes.splice(idx, 1);
+          renderJEs();
+          renderKPIs();
+        });
+      });
+
+      const total = state.jes.reduce((s, x) => s + Number(x.amount || 0), 0);
+      document.getElementById('jeTotal').textContent = money(total);
+    }
+
+    // ---------- Commentary ----------
+    function buildCommentary() {
+      const metric = document.getElementById('varMetric').value;
+      const dir = document.getElementById('varDirection').value;
+      const amt = Number(document.getElementById('varAmount').value || 0);
+      const driver = (document.getElementById('varDriver').value || '').trim();
+
+      const month = document.getElementById('closeMonth').value
+        ? new Date(document.getElementById('closeMonth').value + '-01').toLocaleDateString('en-US', { month:'long', year:'numeric' })
+        : 'the month';
+
+      const sign = dir === 'favorable' ? 'favorable' : 'unfavorable';
+      const driverText = driver ? ` driven primarily by ${driver}` : ' driven by mix of timing and volume effects';
+
+      return `For ${month}, ${metric} variance was ${sign} by ${money(Math.abs(amt))}${driverText}. ` +
+             `We are monitoring run-rate and expecting normalization next period as invoices/postings catch up. ` +
+             `Action: confirm cutoff completeness + validate recurring drivers.`;
+    }
+
+    // ---------- Event wiring ----------
+    document.getElementById('addJEBtn').addEventListener('click', () => {
+      const type = document.getElementById('jeType').value;
+      const desc = document.getElementById('jeDesc').value.trim();
+      const amount = Number(document.getElementById('jeAmount').value || 0);
+      const debit = document.getElementById('jeDebit').value.trim();
+      const credit = document.getElementById('jeCredit').value.trim();
+
+      if (!desc || !debit || !credit || amount <= 0) {
+        alert('Fill Description + Debit + Credit + Amount (>0).');
+        return;
+      }
+
+      state.jes.push({
+        type: type === 'accrual' ? 'Accrual' : 'Deferral',
+        desc, debit, credit, amount
+      });
+
+      document.getElementById('jeDesc').value = '';
+      document.getElementById('jeAmount').value = '';
+      document.getElementById('jeDebit').value = '';
+      document.getElementById('jeCredit').value = '';
+
+      renderJEs();
+      renderKPIs();
+    });
+
+    document.getElementById('clearJEBtn').addEventListener('click', () => {
+      state.jes = [];
+      renderJEs();
+      renderKPIs();
+    });
+
+    document.getElementById('exportJEBtn').addEventListener('click', () => {
+      const lines = [
+        'Type\tDescription\tDebit\tCredit\tAmount',
+        ...state.jes.map(j => `${j.type}\t${j.desc}\t${j.debit}\t${j.credit}\t${j.amount}`)
+      ];
+      copyText(lines.join('\n'));
+    });
+
+    document.getElementById('genCommentBtn').addEventListener('click', () => {
+      document.getElementById('commentOut').value = buildCommentary();
+    });
+
+    document.getElementById('copyCommentBtn').addEventListener('click', () => {
+      copyText(document.getElementById('commentOut').value || '');
+    });
+
+    document.getElementById('clearCommentBtn').addEventListener('click', () => {
+      document.getElementById('commentOut').value = '';
+    });
+
+    document.getElementById('markAllDoneBtn').addEventListener('click', () => {
+      state.checklist.forEach(x => x.status = 'Done');
+      renderChecklist();
+      renderKPIs();
+    });
+
+    document.getElementById('resetChecklistBtn').addEventListener('click', () => {
+      state.checklist.forEach(x => x.status = 'Pending');
+      renderChecklist();
+      renderKPIs();
+    });
+
+    ['closeStatus','closeMonth','closeOwner'].forEach(id => {
+      document.getElementById(id).addEventListener('input', renderKPIs);
+    });
+
+    // init
+    renderTimeline();
+    renderChecklist();
+    renderJEs();
+    renderKPIs();
+  </script>
+</body>
+</html>
