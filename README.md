@@ -2,7 +2,7 @@
 
 > **A comprehensive FP&A portfolio project demonstrating strategic finance capabilities across forecasting, sales analytics, operations, executive reporting, and treasury management.**
 
-🔗 **[Live Demo](https://yourusername.github.io/finance-operating-system/)** *(Replace with your GitHub Pages URL)*
+🔗 **[Live Demo](https://ralphpatrick.github.io/finance-portfolio/)**
 
 ---
 
